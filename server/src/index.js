@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-const morgan = require("morgan");
+const morgan = require("morgan");''
 
 const { initializeSchema } = require("./database/schema");
 
