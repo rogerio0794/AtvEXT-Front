@@ -34,75 +34,10 @@ const TIERS = {
   '0': { level: 1, xp: 0,   xpToNextLevel: 250, coins: 0,  streak: 0, totalQuizzes: 0  },
 };
 
-// [id_offset, name, apelido, email, avatar, tier]
-// id = String(10 + index)  (so index 0 → '10', index 60 → '70')
-// tier = '5'|'4'|'3'|'2'|'1'|'0'  (matches feedbackPool order from seed.js)
+
 const RAW_STUDENTS: [string, string, string, string, string][] = [
   // ── GROUP 1 (0-17) ──
-  ['Ana Carolina Silva',        'Ana Carolina',   'ana.carolina@gmail.com',        '👩‍🎓', '5'],
-  ['Bruno Henrique Santos',     'Bruno',          'bruno.henrique@gmail.com',       '👨‍🎓', '5'],
-  ['sixSeven',                  'sixSeven',       'sixseven@gmail.com',             '🎮',   '5'],
-  ['Camila Ferreira Oliveira',  'Camila',         'camila.ferreira@gmail.com',      '👩‍💻', '0'],
-  ['Diego Alves Costa',         'Diego',          'diego.alves@hotmail.com',        '👨‍💻', '5'],
-  ['zeBotijão Nascimento',      'zeBotijão',      'zebotijao@gmail.com',            '🦝',   '5'],
-  ['Eduarda Lima Martins',      'Eduarda',        'eduarda.lima@gmail.com',         '👩‍🎓', '5'],
-  ['Felipe Rodrigues Neto',     'Felipe',         'felipe.rodrigues@gmail.com',     '👨‍🎓', '0'],
-  ['juninhoDoPneu',             'juninhoDoPneu',  'juninhopneu@gmail.com',          '🚗',   '4'],
-  ['Gabriela Nascimento Cruz',  'Gabi',           'gabriela.nascimento@hotmail.com','👩‍💻', '4'],
-  ['Henrique Souza Alves',      'Henrique',       'henrique.souza@gmail.com',       '👨‍💻', '4'],
-  ['DestroyerBR',               'DestroyerBR',    'destroyerbr@gmail.com',          '💥',   '0'],
-  ['Isabela Carvalho Pinto',    'Isabela',        'isabela.carvalho@gmail.com',     '👩‍🎓', '4'],
-  ['João Pedro Mendes',         'João Pedro',     'joao.pedro@gmail.com',           '👨‍🎓', '4'],
-  ['Patolino123',               'Patolino123',    'patolino123@hotmail.com',        '🦆',   '4'],
-  ['Larissa Rocha Pereira',     'Larissa',        'larissa.rocha@gmail.com',        '👩‍💻', '0'],
-  ['Matheus Barbosa Lima',      'Matheus',        'matheus.barbosa@gmail.com',      '👨‍💻', '4'],
-  ['RobocopZika',               'RobocopZika',    'robocopzika@gmail.com',          '🤖',   '4'],
-  // ── GROUP 2 (18-42) ──
-  ['Natalia Cunha Freitas',     'Nati',           'natalia.cunha@gmail.com',        '👩‍🎓', '4'],
-  ['Otávio Pinto Marques',      'Otávio',         'otavio.pinto@hotmail.com',       '👨‍🎓', '0'],
-  ['TiaoTrator',                'TiaoTrator',     'tiaotrator@gmail.com',           '🚜',   '4'],
-  ['Priscila Melo Teixeira',    'Pri',            'priscila.melo@gmail.com',        '👩‍💻', '4'],
-  ['Rafael Batista Santos',     'Rafael',         'rafael.batista@gmail.com',       '👨‍💻', '4'],
-  ['BatatinhaNerd',             'BatatinhaNerd',  'batatinhanerd@gmail.com',        '🥔',   '0'],
-  ['Sabrina Castro Moreira',    'Sabrina',        'sabrina.castro@hotmail.com',     '👩‍🎓', '4'],
-  ['Thiago Nunes Cardoso',      'Thiago',         'thiago.nunes@gmail.com',         '👨‍🎓', '4'],
-  ['SorveteFrito',              'SorveteFrito',   'sorvetefrito@gmail.com',         '🍦',   '4'],
-  ['Valentina Moreira Dias',    'Val',            'valentina.moreira@gmail.com',    '👩‍💻', '0'],
-  ['Wellington Araújo Lima',    'Wellington',     'wellington.araujo@gmail.com',    '👨‍💻', '4'],
-  ['XavierDaGaláxia',          'XavierDaGaláxia','xavirgalaxia@hotmail.com',       '🌌',   '0'],
-  ['Yasmin Cardoso Costa',      'Yasmin',         'yasmin.cardoso@gmail.com',       '👩‍🎓', '4'],
-  ['Amanda Freitas Ribeiro',    'Amanda',         'amanda.freitas@gmail.com',       '👩‍💻', '4'],
-  ['MascaradoBR',               'MascaradoBR',    'mascaradobr@gmail.com',          '🎭',   '0'],
-  ['Lucas Monteiro Gomes',      'Lucas',          'lucas.monteiro@gmail.com',       '👨‍💻', '4'],
-  ['Vitória Ribeiro Machado',   'Vitória',        'vitoria.ribeiro@hotmail.com',    '👩‍🎓', '0'],
-  ['ZéMarmitex',                'ZéMarmitex',     'zemarmitex@gmail.com',           '🍱',   '4'],
-  ['Guilherme Lemos Vieira',    'Guilherme',      'guilherme.lemos@gmail.com',      '👨‍🎓', '0'],
-  ['Fernanda Correia Souza',    'Fê',             'fernanda.correia@gmail.com',     '👩‍💻', '4'],
-  ['CabroEstressado',           'CabroEstressado','cabroestressado@gmail.com',      '😤',   '3'],
-  ['Paulo Henrique Dias',       'Paulo',          'paulo.henrique@hotmail.com',     '👨‍💻', '0'],
-  ['Leticia Marques Silva',     'Leticia',        'leticia.marques@gmail.com',      '👩‍🎓', '3'],
-  ['DomingoSeco',               'DomingoSeco',    'domingoseco@gmail.com',          '☀️',   '0'],
-  ['Leonardo Castro Borges',    'Leo',            'leonardo.castro@gmail.com',      '👨‍🎓', '3'],
-  // ── GROUP 3 (43-60) ──
-  ['Marina Fonseca Azevedo',    'Marina',         'marina.fonseca@gmail.com',       '👩‍💻', '3'],
-  ['Carlos Eduardo Vieira',     'Carlão',         'carlos.vieira@hotmail.com',      '👨‍💻', '0'],
-  ['Bianca Tavares Rocha',      'Bianca',         'bianca.tavares@gmail.com',       '👩‍🎓', '3'],
-  ['PitombaDaLua',              'PitombaDaLua',   'pitombalua@gmail.com',           '🌙',   '0'],
-  ['Rodrigo Machado Costa',     'Rodrigo',        'rodrigo.machado@gmail.com',      '👨‍🎓', '3'],
-  ['Talita Gomes Ferreira',     'Talita',         'talita.gomes@gmail.com',         '👩‍💻', '0'],
-  ['Vinicius Azevedo Santos',   'Vini',           'vinicius.azevedo@hotmail.com',   '👨‍💻', '3'],
-  ['NinjaDoPix',                'NinjaDoPix',     'ninjadopix@gmail.com',           '🥷',   '0'],
-  ['Renata Campos Lima',        'Renata',         'renata.campos@gmail.com',        '👩‍🎓', '2'],
-  ['André Ferraz Oliveira',     'André',          'andre.ferraz@gmail.com',         '👨‍🎓', '0'],
-  ['Claudia Borges Melo',       'Claudia',        'claudia.borges@gmail.com',       '👩‍💻', '2'],
-  ['GatoGordinhoBR',            'GatoGordinhoBR', 'gatogordinho@hotmail.com',       '🐱',   '0'],
-  ['Marcelo Batista Cruz',      'Marcelo',        'marcelo.batista@gmail.com',      '👨‍💻', '0'],
-  ['Aline Moura Pinto',         'Aline',          'aline.moura@gmail.com',          '👩‍🎓', '1'],
-  ['Fabio Cavalcanti Neto',     'Fabio',          'fabio.cavalcanti@gmail.com',     '👨‍🎓', '0'],
-  ['TocinhoDaSorte',            'TocinhoDaSorte', 'tocinhoda@gmail.com',            '🐷',   '0'],
-  ['Luciana Queiroz Alves',     'Lu',             'luciana.queiroz@hotmail.com',    '👩‍💻', '0'],
-  ['Tiago Andrade Mendes',      'Tiago',          'tiago.andrade@gmail.com',        '👨‍💻', '0'],
-];
+  ['Ana Carolina Silva',        'Ana Carolina',   'ana.carolina@gmail.com',        '👩‍🎓', '5']]
 
 export const SEED_STUDENTS: SeedUser[] = RAW_STUDENTS.map(([name, apelido, email, avatar, tier], idx) => ({
   id: String(10 + idx),

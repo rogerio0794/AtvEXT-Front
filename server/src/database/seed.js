@@ -39,12 +39,7 @@ async function seed() {
   const today = new Date().toISOString().split("T")[0];
   const users = [
     ["Ana Silva", "Ana", "ana@quiztech.com", passwordHash, "student", "👩‍💻", 12, 2850, 340, 7, today],
-    ["Carlos Mendes", "Carlos", "carlos@quiztech.com", passwordHash, "student", "👨‍🎓", 10, 2100, 210, 3, today],
-    ["Beatriz Santos", "Bea", "beatriz@quiztech.com", passwordHash, "student", "👩‍🎓", 15, 4200, 520, 14, today],
-    ["Rafael Costa", "Rafa", "rafael@quiztech.com", passwordHash, "student", "👨‍💻", 8, 1450, 130, 1, today],
-    ["Mariana Lima", "Mari", "mariana@quiztech.com", passwordHash, "student", "👩‍🏫", 11, 2600, 290, 5, today],
-    ["Prof. João Ferreira", "Prof. João", "professor@quiztech.com", teacherHash, "teacher", "👨‍🏫", 1, 0, 0, 0, null],
-    ["Admin", null, "admin@quiztech.com", bcrypt.hashSync("admin123", 10), "admin", "⚙️", 1, 0, 0, 0, null],
+    ["Carlos Mendes", "Carlos", "carlos@quiztech.com", passwordHash, "student", "👨‍🎓", 10, 2100, 210, 3, today],   
   ];
 
   const userIds = users.map((u) => insertUser.run(...u).lastInsertRowid);
