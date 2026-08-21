@@ -25,19 +25,7 @@ function seed() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  // ──────────────────────────────────────────────
-  // PROFESSORES
-  // ──────────────────────────────────────────────
-  const teachers = [
-    ["Rogério Pereira Junior", "Rogério",  "rogerio.pereira@ifsc.edu.br",   "👨‍🏫", "2026-08-05 08:30:00"],
-    ["Marcos Moecke",          "Marcos",   "marcos.moecke@ifsc.edu.br",     "👨‍🏫", "2026-08-21 13:30:00"],
-    ["Alberto Torresini",      "Alberto",  "torresini.ederson@ifsc.edu.br", "👨‍🏫", "2026-08-21 13:42:00"],
-  ];
-
-  const teacherIds = teachers.map(([name, apelido, email, avatar, createdAt]) =>
-    insertUser.run(name, apelido, email, teacherHash, "teacher", avatar, 1, 0, 0, 0, null, createdAt, createdAt).lastInsertRowid
-  );
-  const rogId = teacherIds[0];
+  
 
   // ──────────────────────────────────────────────
   // ADMIN
@@ -54,15 +42,7 @@ function seed() {
     bcrypt.hashSync("professor123", 10), "teacher", "👨‍🏫",
     1, 0, 0, 0, null, "2026-08-20 10:00:00", "2026-08-20 10:00:00");
 
-  // ──────────────────────────────────────────────
-  // ALUNOS — 61 no total
-  // ~80% @gmail.com | ~20% @hotmail.com  (12 hotmail, 49 gmail)
-  // ~30% apelidos inusitados (18 alunos)
-  // Formato: [name, apelido, email, avatar, created_at]
-  // ──────────────────────────────────────────────
-
-  // GRUPO 1 — 18 alunos · 18/08/2026 a partir das 13:30
-  // @hotmail: posições globais 4 (Diego), 9 (Gabriela), 14 (Patolino123)
+  
   const group1 = [
     ["Ana Carolina Silva",       "Ana Carolina",   "ana.carolina@gmail.com",         "👩‍🎓", "2026-08-21 13:30:00"],
     ["Bruno Henrique Santos",    "Bruno",          "bruno.henrique@gmail.com",        "👨‍🎓", "2026-08-21 13:33:00"],
@@ -84,8 +64,6 @@ function seed() {
     ["RobocopZika",              "RobocopZika",    "robocopzika@gmail.com",           "🤖",   "2026-08-21 14:41:00"],
   ];
 
-  // GRUPO 2 — 25 alunos · 18/08/2026 a partir das 15:40
-  // @hotmail: posições globais 19 (Otávio), 24 (Sabrina), 29 (Xavier), 34 (Vitória), 39 (Paulo)
   const group2 = [
     ["Natalia Cunha Freitas",    "Nati",           "natalia.cunha@gmail.com",         "👩‍🎓", "2026-08-21 15:40:00"],
     ["Otávio Pinto Marques",     "Otávio",         "otavio.pinto@hotmail.com",        "👨‍🎓", "2026-08-21 15:44:00"],
@@ -114,8 +92,7 @@ function seed() {
     ["Leonardo Castro Borges",   "Leo",            "leonardo.castro@gmail.com",       "👨‍🎓", "2026-08-21 17:23:00"],
   ];
 
-  // GRUPO 3 — 18 alunos · 19/08/2026 a partir das 13:30
-  // @hotmail: posições globais 44 (Carlos), 49 (Vinicius), 54 (GatoGordinho), 59 (Luciana)
+
   const group3 = [
     ["Marina Fonseca Azevedo",   "Marina",         "marina.fonseca@gmail.com",        "👩‍💻", "2026-08-21 13:30:00"],
     ["Carlos Eduardo Vieira",    "Carlão",         "carlos.vieira@hotmail.com",       "👨‍💻", "2026-08-21 13:33:00"],
@@ -137,20 +114,13 @@ function seed() {
     ["Tiago Andrade Mendes",     "Tiago",          "tiago.andrade@gmail.com",         "👨‍💻", "2026-08-21 14:42:00"],
   ];
 
-  // Inserir alunos e guardar IDs na ordem de inserção
   const allStudentIds = [];
   for (const [name, apelido, email, avatar, createdAt] of [...group1, ...group2, ...group3]) {
     const id = insertUser.run(name, apelido, email, studentHash, "student", avatar, 1, 0, 0, 0, null, createdAt, createdAt).lastInsertRowid;
     allStudentIds.push(id);
   }
 
-  // ──────────────────────────────────────────────
-  // FEEDBACKS — 60% dos alunos = 37 de 61
-  // Maioria 4★ | alguns 5★, 3★, 2★, 1★
-  // Índices selecionados (0-based): distribuídos ao longo dos 3 grupos
-  // ──────────────────────────────────────────────
-
-  // [rating, comment | null]  — 37 entradas exatas
+  
   const feedbackPool = [
     // 5★ (6 feedbacks)
     [5, "Simplesmente incrível! Uso todo dia"],
@@ -195,16 +165,13 @@ function seed() {
     // 1★ (1 feedback)
     [1, "Não me engajou muito, poderia ser mais dinâmico"],
   ];
-  // Total: 6+21+7+2+1 = 37 ✓
 
-  // Índices dos 37 alunos que darão feedback (distribuídos nos 3 grupos)
-  // 37/61 = 60.6%
   const feedbackIndices = new Set([
      0,  1,  2,  4,  5,  6,  8,  9, 10, 12,
     13, 14, 16, 17, 18, 20, 21, 22, 24, 25,
     26, 28, 30, 31, 33, 35, 37, 38, 40, 42,
     43, 45, 47, 49, 51, 53, 56,
-  ]); // 37 índices ✓
+  ]);
 
   const insertFeedback = db.prepare(`
     INSERT INTO feedbacks (user_id, rating, comment) VALUES (?, ?, ?)
@@ -218,9 +185,7 @@ function seed() {
     }
   }
 
-  // ──────────────────────────────────────────────
-  // CATEGORIAS
-  // ──────────────────────────────────────────────
+
   const insertCategory = db.prepare(`
     INSERT INTO categories (name, description, icon, color, difficulty)
     VALUES (?, ?, ?, ?, ?)
@@ -235,9 +200,7 @@ function seed() {
     ["Tecnologias",           "Tendências e tecnologias emergentes",           "🚀", "#60a5fa", "easy"],
   ].map((c) => insertCategory.run(...c).lastInsertRowid);
 
-  // ──────────────────────────────────────────────
-  // QUIZZES
-  // ──────────────────────────────────────────────
+
   const insertQuiz = db.prepare(`
     INSERT INTO quizzes (title, description, category_id, difficulty, xp_reward, coin_reward, time_limit, created_by)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
