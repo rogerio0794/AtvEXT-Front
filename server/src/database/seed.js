@@ -6,17 +6,16 @@ const bcrypt = require("bcryptjs");
 function seed() {
   initializeSchema();
 
-  // PROTEÇÃO: executa apenas uma vez. Nunca apaga nem reseed.
+  // PROTEÇÃO: executa apenas uma vez para evitar duplicação de dados
   const existing = db.prepare("SELECT COUNT(*) as count FROM users").get();
   if (existing.count > 0) {
-    console.log("✅ Banco já populado. Seed ignorado (execução única protegida).");
+    console.log("Banco já populado.");
     return;
   }
 
-  console.log("🌱 Populando banco de dados pela primeira vez...");
+  console.log("Populando banco de dados para testes");
 
   const studentHash = bcrypt.hashSync("senha123", 10);
-  const teacherHash = bcrypt.hashSync("ifsc@2026", 10);
   const adminHash   = bcrypt.hashSync("admin2026", 10);
 
   const insertUser = db.prepare(`
@@ -43,134 +42,28 @@ function seed() {
     1, 0, 0, 0, null, "2026-08-20 10:00:00", "2026-08-20 10:00:00");
 
   
-  const group1 = [
-    ["Ana Carolina Silva",       "Ana Carolina",   "ana.carolina@gmail.com",         "👩‍🎓", "2026-08-21 13:30:00"],
-    ["Bruno Henrique Santos",    "Bruno",          "bruno.henrique@gmail.com",        "👨‍🎓", "2026-08-21 13:33:00"],
-    ["sixSeven",                 "sixSeven",       "sixseven@gmail.com",              "🎮",   "2026-08-21 13:37:00"],
-    ["Camila Ferreira Oliveira", "Camila",         "camila.ferreira@gmail.com",       "👩‍💻", "2026-08-21 13:41:00"],
-    ["Diego Alves Costa",        "Diego",          "diego.alves@hotmail.com",         "👨‍💻", "2026-08-21 13:45:00"],
-    ["zeBotijão Nascimento",     "zeBotijão",      "zebotijao@gmail.com",             "🦝",   "2026-08-21 13:49:00"],
-    ["Eduarda Lima Martins",     "Eduarda",        "eduarda.lima@gmail.com",          "👩‍🎓", "2026-08-21 13:53:00"],
-    ["Felipe Rodrigues Neto",    "Felipe",         "felipe.rodrigues@gmail.com",      "👨‍🎓", "2026-08-21 13:57:00"],
-    ["juninhoDoPneu",            "juninhoDoPneu",  "juninhopneu@gmail.com",           "🚗",   "2026-08-21 14:02:00"],
-    ["Gabriela Nascimento Cruz", "Gabi",           "gabriela.nascimento@hotmail.com", "👩‍💻", "2026-08-21 14:06:00"],
-    ["Henrique Souza Alves",     "Henrique",       "henrique.souza@gmail.com",        "👨‍💻", "2026-08-21 14:10:00"],
-    ["DestroyerBR",              "DestroyerBR",    "destroyerbr@gmail.com",           "💥",   "2026-08-21 14:14:00"],
-    ["Isabela Carvalho Pinto",   "Isabela",        "isabela.carvalho@gmail.com",      "👩‍🎓", "2026-08-21 14:19:00"],
-    ["João Pedro Mendes",        "João Pedro",     "joao.pedro@gmail.com",            "👨‍🎓", "2026-08-21 14:23:00"],
-    ["Patolino123",              "Patolino123",    "patolino123@hotmail.com",         "🦆",   "2026-08-21 14:27:00"],
-    ["Larissa Rocha Pereira",    "Larissa",        "larissa.rocha@gmail.com",         "👩‍💻", "2026-08-21 14:32:00"],
-    ["Matheus Barbosa Lima",     "Matheus",        "matheus.barbosa@gmail.com",       "👨‍💻", "2026-08-21 14:37:00"],
-    ["RobocopZika",              "RobocopZika",    "robocopzika@gmail.com",           "🤖",   "2026-08-21 14:41:00"],
-  ];
-
-  const group2 = [
-    ["Natalia Cunha Freitas",    "Nati",           "natalia.cunha@gmail.com",         "👩‍🎓", "2026-08-21 15:40:00"],
-    ["Otávio Pinto Marques",     "Otávio",         "otavio.pinto@hotmail.com",        "👨‍🎓", "2026-08-21 15:44:00"],
-    ["TiaoTrator",               "TiaoTrator",     "tiaotrator@gmail.com",            "🚜",   "2026-08-21 15:48:00"],
-    ["Priscila Melo Teixeira",   "Pri",            "priscila.melo@gmail.com",         "👩‍💻", "2026-08-21 15:52:00"],
-    ["Rafael Batista Santos",    "Rafael",         "rafael.batista@gmail.com",        "👨‍💻", "2026-08-21 15:56:00"],
-    ["BatatinhaNerd",            "BatatinhaNerd",  "batatinhanerd@gmail.com",         "🥔",   "2026-08-21 16:01:00"],
-    ["Sabrina Castro Moreira",   "Sabrina",        "sabrina.castro@hotmail.com",      "👩‍🎓", "2026-08-21 16:05:00"],
-    ["Thiago Nunes Cardoso",     "Thiago",         "thiago.nunes@gmail.com",          "👨‍🎓", "2026-08-21 16:09:00"],
-    ["SorveteFrito",             "SorveteFrito",   "sorvetefrito@gmail.com",          "🍦",   "2026-08-21 16:13:00"],
-    ["Valentina Moreira Dias",   "Val",            "valentina.moreira@gmail.com",     "👩‍💻", "2026-08-21 16:17:00"],
-    ["Wellington Araújo Lima",   "Wellington",     "wellington.araujo@gmail.com",     "👨‍💻", "2026-08-21 16:21:00"],
-    ["XavierDaGaláxia",         "XavierDaGaláxia","xavirgalaxia@hotmail.com",        "🌌",   "2026-08-21 16:26:00"],
-    ["Yasmin Cardoso Costa",     "Yasmin",         "yasmin.cardoso@gmail.com",        "👩‍🎓", "2026-08-21 16:30:00"],
-    ["Amanda Freitas Ribeiro",   "Amanda",         "amanda.freitas@gmail.com",        "👩‍💻", "2026-08-21 16:34:00"],
-    ["MascaradoBR",              "MascaradoBR",    "mascaradobr@gmail.com",           "🎭",   "2026-08-21 16:38:00"],
-    ["Lucas Monteiro Gomes",     "Lucas",          "lucas.monteiro@gmail.com",        "👨‍💻", "2026-08-21 16:43:00"],
-    ["Vitória Ribeiro Machado",  "Vitória",        "vitoria.ribeiro@hotmail.com",     "👩‍🎓", "2026-08-21 16:47:00"],
-    ["ZéMarmitex",               "ZéMarmitex",     "zemarmitex@gmail.com",            "🍱",   "2026-08-21 16:51:00"],
-    ["Guilherme Lemos Vieira",   "Guilherme",      "guilherme.lemos@gmail.com",       "👨‍🎓", "2026-08-21 16:55:00"],
-    ["Fernanda Correia Souza",   "Fê",             "fernanda.correia@gmail.com",      "👩‍💻", "2026-08-21 17:00:00"],
-    ["CabroEstressado",          "CabroEstressado","cabroestressado@gmail.com",       "😤",   "2026-08-21 17:05:00"],
-    ["Paulo Henrique Dias",      "Paulo",          "paulo.henrique@hotmail.com",      "👨‍💻", "2026-08-21 17:09:00"],
-    ["Leticia Marques Silva",    "Leticia",        "leticia.marques@gmail.com",       "👩‍🎓", "2026-08-21 17:14:00"],
-    ["DomingoSeco",              "DomingoSeco",    "domingoseco@gmail.com",           "☀️",   "2026-08-21 17:18:00"],
-    ["Leonardo Castro Borges",   "Leo",            "leonardo.castro@gmail.com",       "👨‍🎓", "2026-08-21 17:23:00"],
+  const group = [
+    ["Roberto Pereira Silva",       "Roberto Pereira",   "roberto.pereira@gmail.com",         "👩‍🎓", "2026-08-19 15:20:00"],
+    ["Gabriel Henrique Santos",    "Gabi",          "gabriel.henrique@gmail.com",        "👨‍🎓", "2026-08-18 13:33:00"],   
   ];
 
 
-  const group3 = [
-    ["Marina Fonseca Azevedo",   "Marina",         "marina.fonseca@gmail.com",        "👩‍💻", "2026-08-21 13:30:00"],
-    ["Carlos Eduardo Vieira",    "Carlão",         "carlos.vieira@hotmail.com",       "👨‍💻", "2026-08-21 13:33:00"],
-    ["Bianca Tavares Rocha",     "Bianca",         "bianca.tavares@gmail.com",        "👩‍🎓", "2026-08-21 13:37:00"],
-    ["PitombaDaLua",             "PitombaDaLua",   "pitombalua@gmail.com",            "🌙",   "2026-08-21 13:41:00"],
-    ["Rodrigo Machado Costa",    "Rodrigo",        "rodrigo.machado@gmail.com",       "👨‍🎓", "2026-08-21 13:46:00"],
-    ["Talita Gomes Ferreira",    "Talita",         "talita.gomes@gmail.com",          "👩‍💻", "2026-08-21 13:50:00"],
-    ["Vinicius Azevedo Santos",  "Vini",           "vinicius.azevedo@hotmail.com",    "👨‍💻", "2026-08-21 13:54:00"],
-    ["NinjaDoPix",               "NinjaDoPix",     "ninjadopix@gmail.com",            "🥷",   "2026-08-21 13:59:00"],
-    ["Renata Campos Lima",       "Renata",         "renata.campos@gmail.com",         "👩‍🎓", "2026-08-21 14:03:00"],
-    ["André Ferraz Oliveira",    "André",          "andre.ferraz@gmail.com",          "👨‍🎓", "2026-08-21 14:07:00"],
-    ["Claudia Borges Melo",      "Claudia",        "claudia.borges@gmail.com",        "👩‍💻", "2026-08-21 14:12:00"],
-    ["GatoGordinhoBR",           "GatoGordinhoBR", "gatogordinho@hotmail.com",        "🐱",   "2026-08-21 14:16:00"],
-    ["Marcelo Batista Cruz",     "Marcelo",        "marcelo.batista@gmail.com",       "👨‍💻", "2026-08-21 14:20:00"],
-    ["Aline Moura Pinto",        "Aline",          "aline.moura@gmail.com",           "👩‍🎓", "2026-08-21 14:25:00"],
-    ["Fabio Cavalcanti Neto",    "Fabio",          "fabio.cavalcanti@gmail.com",      "👨‍🎓", "2026-08-21 14:29:00"],
-    ["TocinhoDaSorte",           "TocinhoDaSorte", "tocinhoda@gmail.com",             "🐷",   "2026-08-21 14:33:00"],
-    ["Luciana Queiroz Alves",    "Lu",             "luciana.queiroz@hotmail.com",     "👩‍💻", "2026-08-21 14:37:00"],
-    ["Tiago Andrade Mendes",     "Tiago",          "tiago.andrade@gmail.com",         "👨‍💻", "2026-08-21 14:42:00"],
-  ];
+  
 
   const allStudentIds = [];
-  for (const [name, apelido, email, avatar, createdAt] of [...group1, ...group2, ...group3]) {
+  for (const [name, apelido, email, avatar, createdAt] of [...group]) {
     const id = insertUser.run(name, apelido, email, studentHash, "student", avatar, 1, 0, 0, 0, null, createdAt, createdAt).lastInsertRowid;
     allStudentIds.push(id);
   }
 
   
-  const feedbackPool = [
-    // 5★ (6 feedbacks)
-    [5, "Simplesmente incrível! Uso todo dia"],
-    [5, "Adorei! O sistema de XP vicia demais"],
-    [5, "Melhor plataforma de estudos que já usei"],
-    [5, "O ranking é muito competitivo e divertido"],
-    [5, "Os quizzes são desafiadores, amei muito!"],
-    [5, "Perfeito para estudar de forma divertida!"],
-    // 4★ (21 feedbacks — maioria)
-    [4, "Gostei muito da plataforma!"],
-    [4, "Legal, bem divertido de usar"],
-    [4, "As missões diárias são animadas"],
-    [4, "O sistema de gamificação é sensacional"],
-    [4, "Interface bem intuitiva e fácil de usar"],
-    [4, "Muito bom, recomendo para todos!"],
-    [4, "Ótima para estudar para o ENEM"],
-    [4, "Bem feito! Parabéns aos desenvolvedores"],
-    [4, "Gostei bastante, fácil de usar"],
-    [4, "O sistema de conquistas é bacana"],
-    [4, "Muito útil! Já aprendi bastante aqui"],
-    [4, null],
-    [4, "Quero mais questões de programação!"],
-    [4, "Bem intuitivo e divertido"],
-    [4, "O sistema de XP me motiva a continuar"],
-    [4, null],
-    [4, "Gostei bastante, continua assim!"],
-    [4, "As conquistas me motivam a não parar de estudar"],
-    [4, "Legal! O ranking me faz querer estudar mais"],
-    [4, "Muito bom para revisar o conteúdo da escola"],
-    [4, null],
-    // 3★ (7 feedbacks)
-    [3, "Poderia ter mais questões em cada quiz"],
-    [3, "Falta mais animações nas respostas"],
-    [3, "As perguntas poderiam ser mais engraçadas para engajamento"],
-    [3, "Poderia ter mais categorias de quiz"],
-    [3, "Bom, o visual poderia ser mais chamativo"],
-    [3, "Bom, mas poderia ter mais conteúdo"],
-    [3, "Tem potencial, poderia ter mais questões difíceis"],
-    // 2★ (2 feedbacks)
-    [2, "Precisa melhorar bastante ainda"],
-    [2, "Achei um pouco simples, esperava mais"],
-    // 1★ (1 feedback)
-    [1, "Não me engajou muito, poderia ser mais dinâmico"],
+  const feedbackPool = [  
+    [5, "OK"],
+    [5, "OK"],    
   ];
 
   const feedbackIndices = new Set([
-     0,  1,  2,  4,  5,  6,  8,  9, 10, 12,
-    13, 14, 16, 17, 18, 20, 21, 22, 24, 25,
-    26, 28, 30, 31, 33, 35, 37, 38, 40, 42,
-    43, 45, 47, 49, 51, 53, 56,
+     2,3,
   ]);
 
   const insertFeedback = db.prepare(`
@@ -359,23 +252,9 @@ function seed() {
     ["Imbatível",           "Mantenha sua sequência por 7 dias",         "🔥", "weekly", 400, 100,  "weekly_streak",   7],
   ].forEach((m) => insertMission.run(...m));
 
-  // ──────────────────────────────────────────────
-  // RESUMO FINAL
-  // ──────────────────────────────────────────────
-  const gmailCount = [...group1, ...group2, ...group3].filter(([,,,, , email]) =>
-    (email ?? "").includes("@gmail")
-  ).length;
-
-  // recount properly
-  const allStudents = [...group1, ...group2, ...group3];
-  const gmailC = allStudents.filter(s => s[2].includes("@gmail")).length;
-  const hotmailC = allStudents.filter(s => s[2].includes("@hotmail")).length;
 
   const fbStats = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   feedbackPool.forEach(([r]) => fbStats[r]++);
-
-  console.log("\n✅ Banco populado com sucesso!\n");
-  console.log(`👥 Usuários: ${allStudents.length} alunos + ${teachers.length} professores + 1 admin`);
 
 }
 
