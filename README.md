@@ -11,19 +11,19 @@ code/
 ├── src/               # Front-end (React + Vite)
 │   └── app/
 │       ├── pages/     # 15+ páginas (Dashboard, Quiz, Ranking, etc.)
-│       ├── contexts/  # AuthContext (auth via localStorage)
-│       ├── data/      # seedData.ts — dados iniciais do localStorage
+│       ├── contexts/  # AuthContext (auth via JWT)
+│       ├── data/      # seedData.ts — dados iniciais de testes e população do banco de dados com questões iniciais
 │       └── routes.ts
 └── server/            # Back-end (Node.js + Express + SQLite)
     ├── src/
     │   ├── database/
     │   │   ├── schema.js   # Criação das tabelas
-    │   │   ├── seed.js     # Popula o banco (execução única)
+    │   │   ├── seed.js     # Popula o banco (execução única) - dados iniciais de testes e população do banco de dados com questões iniciais
     │   │   └── db.js       # Conexão SQLite
     │   ├── routes/         # Endpoints da API REST
     │   └── index.js        # Entrada do servidor
     └── data/
-        └── quiztech.db     # Banco SQLite
+        └── quiztech.db     # Banco SQLite (gerado automaticamente)
 ```
 
 ---
@@ -48,13 +48,10 @@ cd server
 npm install
 
 # Configurar variáveis de ambiente
-cp .env.example .env
 # Edite .env e troque JWT_SECRET por uma string segura
 
 # Iniciar o servidor
 npm run dev        # desenvolvimento (nodemon, auto-reload)
-# ou
-npm start          # produção
 ```
 
 O servidor sobe em **http://localhost:3001**.
@@ -86,9 +83,9 @@ O front-end sobe em **http://localhost:5173**.
 ```
 1. cd server && npm install
 2. cp server/.env.example server/.env   # e configure o JWT_SECRET
-4. npm run dev           (dentro de server/)  ← back-end rodando
-5. pnpm dev              (na raiz)            ← front-end rodando
-6. Acesse http://localhost:5173
+2. npm run dev           (dentro de server/)  ← back-end rodando
+3. pnpm dev              (na raiz)            ← front-end rodando
+4. Acesse http://localhost:5173
 ```
 
 ---
@@ -115,7 +112,6 @@ O front-end sobe em **http://localhost:5173**.
 | Aluno     | `ana@quiztech.com`          | `senha123`     |
 | Professor | `professor@quiztech.com`    | `professor123` |
 
----
 
 ## API — Principais Endpoints
 
@@ -133,6 +129,17 @@ O front-end sobe em **http://localhost:5173**.
 
 ---
 
-## Observação sobre Autenticação
+## Arquitetura de Autenticação
 
-O front-end ainda usa **localStorage** para autenticação (não consome a API JWT). 
+O front-end usa JWT via API REST
+
+| Fluxo               | Como funciona                                                   |
+|---------------------|-----------------------------------------------------------------|
+| Login / Registro    | `POST /api/auth/login` ou `/api/auth/register` → retorna token |
+| Sessão persistente  | Token JWT salvo em `localStorage` (`quiztech_token`)           |
+| Restaurar sessão    | Na abertura do app: `GET /api/auth/me` com o token             |
+| Avaliações (aluno)  | `GET /api/feedbacks/mine` e `POST /api/feedbacks`              |
+| Avaliações (prof.)  | `GET /api/feedbacks?limit=200`                                 |
+| Lista de usuários   | `GET /api/users?limit=200`                                     |
+
+> O back-end **precisa estar rodando** para o front-end funcionar. Suba o servidor antes de acessar o app.

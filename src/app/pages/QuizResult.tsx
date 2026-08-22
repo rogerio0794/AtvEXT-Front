@@ -15,12 +15,15 @@ export function QuizResult() {
   }
 
   const correctAnswers = questions.filter((q: any, index: number) =>
-    answers[index] === q.correctAnswer
+    answers[index] === q.correct_alternative
   ).length;
 
   const wrongAnswers = questions.length - correctAnswers;
   const score = Math.round((correctAnswers / questions.length) * 100);
-  const xpEarned = correctAnswers * 10;
+  const quizXp = location.state?.quiz?.xp_reward ?? 0;
+  const xpEarned = quizXp > 0
+    ? Math.round((correctAnswers / questions.length) * quizXp)
+    : correctAnswers * 10;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

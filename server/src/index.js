@@ -65,7 +65,6 @@ app.use((req, res) => {
   res.status(404).json({ error: `Rota não encontrada: ${req.method} ${req.path}` });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({
@@ -76,7 +75,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`\n🚀 QuizTech API rodando em http://localhost:${PORT}`);
   console.log(`📚 Documentação de rotas: http://localhost:${PORT}/api/health`);
-  console.log(`🌱 Para popular o banco: npm run seed\n`);
 });
 
 module.exports = app;

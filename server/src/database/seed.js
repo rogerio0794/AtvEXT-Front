@@ -6,14 +6,14 @@ const bcrypt = require("bcryptjs");
 function seed() {
   initializeSchema();
 
-  // PROTEÇÃO: executa apenas uma vez para evitar duplicação de dados
+  // PROTEÇÃO: executa apenas uma vez. Nunca apaga nem reseed.
   const existing = db.prepare("SELECT COUNT(*) as count FROM users").get();
   if (existing.count > 0) {
-    console.log("Banco já populado.");
+    console.log("Banco já populado. Seed ignorado (execução única protegida).");
     return;
   }
 
-  console.log("Populando banco de dados para testes");
+  console.log("Populando banco de dados pela primeira vez...");
 
   const studentHash = bcrypt.hashSync("senha123", 10);
   const adminHash   = bcrypt.hashSync("admin2026", 10);
@@ -24,7 +24,6 @@ function seed() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  
 
   // ──────────────────────────────────────────────
   // ADMIN
@@ -36,35 +35,48 @@ function seed() {
   // CONTAS DEMO (login rápido para testes)
   // ──────────────────────────────────────────────
   insertUser.run("Ana Silva", "Ana", "ana@quiztech.com", studentHash, "student", "👩‍💻",
-    12, 2850, 340, 7, "2026-08-20", "2026-08-20 10:00:00", "2026-08-20 10:00:00");
+    12, 2850, 340, 7, "2026-08-19", "2026-08-19 10:00:00", "2026-08-19 10:00:00");
   insertUser.run("Prof. João Ferreira", "Prof. João", "professor@quiztech.com",
     bcrypt.hashSync("professor123", 10), "teacher", "👨‍🏫",
-    1, 0, 0, 0, null, "2026-08-20 10:00:00", "2026-08-20 10:00:00");
+    1, 0, 0, 0, null, "2026-08-19 10:00:00", "2026-08-19 10:00:00");
 
-  
+  // Contas para testes de feedback, conquistas e missões , caso não consiga criar as contas reais com os alunos
+
   const group = [
-    ["Roberto Pereira Silva",       "Roberto Pereira",   "roberto.pereira@gmail.com",         "👩‍🎓", "2026-08-19 15:20:00"],
-    ["Gabriel Henrique Santos",    "Gabi",          "gabriel.henrique@gmail.com",        "👨‍🎓", "2026-08-18 13:33:00"],   
-  ];
+    ["Ana Carolina Silva",       "Ana Carolina",   "ana.carolina09@gmail.com",        "👩‍🎓", "2026-08-19 10:30:00"],
+    ["Kauan Motta Braga",        "Kauan",          "kauan.mb09@gmail.com",            "👨‍🎓", "2026-08-19 10:30:00"],    
+  ]; 
+  const studentLevels = [1, 2];
 
 
-  
+  function studentStats(level, idx) {
+    const base = (level - 1) * 250;
+    const xp = base + ((idx * 37 + 13) % 221);
+    const coins = Math.floor(xp / 8);
+    const streakPool = [0, 0, 1, 1, 2, 3, 5, 7, 10, 14];
+    const streak = streakPool[(idx * 3 + level) % streakPool.length];
+    return { xp, coins, streak };
+  }
 
+  // Inserir alunos e guardar IDs na ordem de inserção
   const allStudentIds = [];
-  for (const [name, apelido, email, avatar, createdAt] of [...group]) {
-    const id = insertUser.run(name, apelido, email, studentHash, "student", avatar, 1, 0, 0, 0, null, createdAt, createdAt).lastInsertRowid;
+  const studentsList = [...group];
+  for (let i = 0; i < studentsList.length; i++) {
+    const [name, apelido, email, avatar, createdAt] = studentsList[i];
+    const level = studentLevels[i];
+    const { xp, coins, streak } = studentStats(level, i);
+    const id = insertUser.run(name, apelido, email, studentHash, "student", avatar, level, xp, coins, streak, null, createdAt, createdAt).lastInsertRowid;
     allStudentIds.push(id);
   }
 
-  
-  const feedbackPool = [  
-    [5, "OK"],
-    [5, "OK"],    
+    const feedbackPool = [
+   
+    [5, "Muito legal, aprendemos bastante!"],
+    [5, "BOM"],    
   ];
 
-  const feedbackIndices = new Set([
-     2,3,
-  ]);
+  const feedbackIndices = new Set([0,  1]); 
+
 
   const insertFeedback = db.prepare(`
     INSERT INTO feedbacks (user_id, rating, comment) VALUES (?, ?, ?)
@@ -78,7 +90,9 @@ function seed() {
     }
   }
 
-
+  // ──────────────────────────────────────────────
+  // CATEGORIAS
+  // ──────────────────────────────────────────────
   const insertCategory = db.prepare(`
     INSERT INTO categories (name, description, icon, color, difficulty)
     VALUES (?, ?, ?, ?, ?)
@@ -93,7 +107,9 @@ function seed() {
     ["Tecnologias",           "Tendências e tecnologias emergentes",           "🚀", "#60a5fa", "easy"],
   ].map((c) => insertCategory.run(...c).lastInsertRowid);
 
-
+  // ──────────────────────────────────────────────
+  // QUIZZES
+  // ──────────────────────────────────────────────
   const insertQuiz = db.prepare(`
     INSERT INTO quizzes (title, description, category_id, difficulty, xp_reward, coin_reward, time_limit, created_by)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -108,6 +124,8 @@ function seed() {
     ["Introdução ao Python",        "Sintaxe básica, tipos de dados e funções em Python", categoryIds[2], "easy",    80, 15, 25, rogId],
     ["Segurança da Informação",     "Criptografia, firewalls e boas práticas",             categoryIds[3], "hard",   160, 35, 50, rogId],
     ["Funções e Gráficos",          "Funções do 1º/2º grau, exponenciais e logarítmicas", categoryIds[0], "hard",   130, 28, 40, rogId],
+    ["Geometria Plana",             "Áreas, perímetros, ângulos e figuras planas",         categoryIds[0], "medium",  90, 18, 30, rogId],
+    ["Programação Básica",          "Variáveis, tipos, loops, condicionais e funções",    categoryIds[2], "easy",    70, 14, 25, rogId],
   ].map((q) => insertQuiz.run(...q).lastInsertRowid);
 
   // ──────────────────────────────────────────────
@@ -203,6 +221,156 @@ function seed() {
       "Na internet cada dispositivo precisa ser identificado.",
       JSON.stringify(["O nome do computador na rede", "Um identificador numérico único de um dispositivo na rede", "O endereço físico da placa de rede", "O nome do provedor"]), 1,
       "IP: identificador numérico único atribuído a cada dispositivo.", 4],
+    // Quiz 5: ENEM - Ciências da Natureza
+    [quizIds[4], "O que enuncia a 1ª Lei de Newton (Inércia)?",
+      "As Leis de Newton são fundamentais para a mecânica clássica.",
+      JSON.stringify(["F = m × a", "Ação e reação são iguais e opostas", "Um corpo em repouso tende a permanecer em repouso, e em movimento tende a continuar em movimento", "Energia não se cria nem se destrói"]), 2,
+      "1ª Lei: princípio da inércia — todo corpo mantém seu estado até que uma força atue.", 0],
+    [quizIds[4], "O número atômico de um elemento representa:",
+      "A tabela periódica organiza elementos por suas propriedades atômicas.",
+      JSON.stringify(["O número de nêutrons", "A massa do átomo", "O número de prótons no núcleo", "O número de elétrons na última camada"]), 2,
+      "O número atômico (Z) é o número de prótons, que define a identidade química do elemento.", 1],
+    [quizIds[4], "A fotossíntese produz:",
+      "As plantas convertem energia luminosa em energia química.",
+      JSON.stringify(["CO₂ e H₂O", "Glicose e O₂", "ATP e CO₂", "Proteínas e lipídeos"]), 1,
+      "6CO₂ + 6H₂O + luz → C₆H₁₂O₆ + 6O₂. Glicose é o produto energético e O₂ é liberado.", 2],
+    [quizIds[4], "Qual a unidade de pressão no Sistema Internacional?",
+      "Grandezas físicas possuem unidades padronizadas no SI.",
+      JSON.stringify(["Newton (N)", "Joule (J)", "Pascal (Pa)", "Watt (W)"]), 2,
+      "Pascal (Pa) = N/m². É a unidade de pressão no SI.", 3],
+    [quizIds[4], "Ácido + base em uma reação de neutralização produz:",
+      "Reações ácido-base são comuns em Química.",
+      JSON.stringify(["Mais ácido", "Sal e água", "Um gás inflamável", "Um óxido"]), 1,
+      "Neutralização: ácido + base → sal + água. Exemplo: HCl + NaOH → NaCl + H₂O.", 4],
+    // Quiz 6: Introdução ao Python
+    [quizIds[5], "Como exibir texto na tela em Python?",
+      "Python possui funções nativas para entrada e saída.",
+      JSON.stringify(["echo 'texto'", "console.log('texto')", "print('texto')", "printf('texto')"]), 2,
+      "print() é a função padrão de saída em Python.", 0],
+    [quizIds[5], "Como criar uma lista em Python?",
+      "Listas são uma das estruturas de dados mais usadas em Python.",
+      JSON.stringify(["lista = {1, 2, 3}", "lista = [1, 2, 3]", "lista = (1, 2, 3)", "lista = <1, 2, 3>"]), 1,
+      "Listas usam colchetes []. Chaves {} criam conjuntos/dicionários; parênteses () criam tuplas.", 1],
+    [quizIds[5], "Como comentar uma linha de código em Python?",
+      "Comentários documentam o código sem afetar sua execução.",
+      JSON.stringify(["// comentário", "/* comentário */", "# comentário", "-- comentário"]), 2,
+      "Em Python, # inicia um comentário de linha.", 2],
+    [quizIds[5], "O que gera range(5)?",
+      "range() é usada frequentemente em loops for.",
+      JSON.stringify(["[1, 2, 3, 4, 5]", "Gera os números 0, 1, 2, 3, 4", "Cria 5 variáveis", "Repete 6 vezes"]), 1,
+      "range(5) gera 0, 1, 2, 3, 4 — começa em 0 e vai até n-1.", 3],
+    [quizIds[5], "Como definir uma função em Python?",
+      "Funções permitem reutilizar blocos de código.",
+      JSON.stringify(["function minha_func():", "def minha_func():", "func minha_func():", "void minha_func():"]), 1,
+      "Python usa a palavra-chave 'def' para definir funções.", 4],
+    // Quiz 7: Segurança da Informação
+    [quizIds[6], "O que é um firewall?",
+      "Proteção de redes envolve diversas ferramentas e técnicas.",
+      JSON.stringify(["Um tipo de vírus", "Um software de backup automático", "Um sistema que monitora e filtra o tráfego de rede", "Um banco de dados criptografado"]), 2,
+      "Firewall: barreira que inspeciona e filtra pacotes de rede conforme regras de segurança.", 0],
+    [quizIds[6], "O que é phishing?",
+      "Ataques de engenharia social exploram o comportamento humano.",
+      JSON.stringify(["Sobrecarga de um servidor (DoS)", "Invasão de redes Wi-Fi", "Fraude que engana o usuário para roubar dados pessoais", "Criptografia de arquivos por ransomware"]), 2,
+      "Phishing: e-mails/sites falsos que imitam entidades confiáveis para roubar credenciais.", 1],
+    [quizIds[6], "Para que serve o protocolo HTTPS?",
+      "Protocolos de aplicação determinam como os dados são transmitidos.",
+      JSON.stringify(["Transferência de arquivos FTP", "Comunicação HTTP com criptografia TLS/SSL", "Resolução de nomes DNS", "Envio de e-mails"]), 1,
+      "HTTPS = HTTP + TLS/SSL. Garante confidencialidade e integridade da comunicação.", 2],
+    [quizIds[6], "O que é autenticação de dois fatores (2FA)?",
+      "Autenticação forte reduz o risco de acesso não autorizado.",
+      JSON.stringify(["Digitar a senha duas vezes", "Usar dois métodos distintos de verificação de identidade", "Dois usuários com o mesmo login", "Dupla criptografia de arquivos"]), 1,
+      "2FA exige algo que você sabe (senha) + algo que você tem (token/SMS) ou é (biometria).", 3],
+    [quizIds[6], "O que é criptografia simétrica?",
+      "Existem dois modelos principais de criptografia.",
+      JSON.stringify(["Usa duas chaves diferentes (pública e privada)", "Usa a mesma chave para cifrar e decifrar", "Não usa chaves", "Só funciona offline"]), 1,
+      "Simétrica: mesma chave para cifrar/decifrar (ex.: AES). Assimétrica: par de chaves (ex.: RSA).", 4],
+    // Quiz 8: Funções e Gráficos
+    [quizIds[7], "Dada f(x) = 2x + 3, qual é f(4)?",
+      "Funções do 1º grau têm a forma f(x) = ax + b.",
+      JSON.stringify(["9", "10", "11", "12"]), 2,
+      "f(4) = 2(4) + 3 = 8 + 3 = 11.", 0],
+    [quizIds[7], "O que representa o coeficiente angular de uma reta?",
+      "A equação de uma reta é y = ax + b, onde 'a' é o coeficiente angular.",
+      JSON.stringify(["O ponto onde a reta cruza o eixo y", "O valor de x quando y = 0", "A inclinação da reta", "O valor de y quando x = 0"]), 2,
+      "O coeficiente angular 'a' determina o grau de inclinação da reta.", 1],
+    [quizIds[7], "Para qual valor de x a função f(x) = x² − 4 se anula?",
+      "Zeros de uma função são os valores que tornam f(x) = 0.",
+      JSON.stringify(["x = ±1", "x = ±2", "x = ±4", "x = ±16"]), 1,
+      "x² − 4 = 0 → x² = 4 → x = ±2.", 2],
+    [quizIds[7], "Qual é o domínio da função f(x) = 1/(x − 3)?",
+      "O domínio é o conjunto de valores de x para os quais a função existe.",
+      JSON.stringify(["Todo R", "R − {3}", "x > 3", "x < 3"]), 1,
+      "O denominador não pode ser zero: x − 3 ≠ 0 → x ≠ 3. Domínio = R − {3}.", 3],
+    [quizIds[7], "Crescimento exponencial é representado por qual tipo de função?",
+      "Funções exponenciais aparecem em crescimento populacional, juros compostos, etc.",
+      JSON.stringify(["f(x) = ax + b", "f(x) = ax²", "f(x) = aˣ (a > 0, a ≠ 1)", "f(x) = log(x)"]), 2,
+      "Função exponencial: f(x) = aˣ. A variável está no expoente.", 4],
+    // Quiz 9: Geometria Plana
+    [quizIds[8], "Qual é a área de um quadrado de lado 5 cm?",
+      "A área de um quadrado é calculada pelo quadrado do lado.",
+      JSON.stringify(["10 cm²", "20 cm²", "25 cm²", "50 cm²"]), 2,
+      "Área = lado² = 5² = 25 cm².", 0],
+    [quizIds[8], "Qual é a soma dos ângulos internos de qualquer triângulo?",
+      "Triângulos têm uma propriedade fundamental sobre seus ângulos.",
+      JSON.stringify(["90°", "180°", "270°", "360°"]), 1,
+      "A soma dos ângulos internos de um triângulo é sempre 180°.", 1],
+    [quizIds[8], "Qual é a área de um círculo com raio 4 cm? (π ≈ 3,14)",
+      "A fórmula da área do círculo envolve o raio e o número π.",
+      JSON.stringify(["12,56 cm²", "25,12 cm²", "50,24 cm²", "100,48 cm²"]), 2,
+      "Área = π × r² = 3,14 × 4² = 3,14 × 16 = 50,24 cm².", 2],
+    [quizIds[8], "Um retângulo tem base 8 cm e altura 5 cm. Qual é sua área?",
+      "A área do retângulo é base multiplicada pela altura.",
+      JSON.stringify(["13 cm²", "26 cm²", "40 cm²", "64 cm²"]), 2,
+      "Área = base × altura = 8 × 5 = 40 cm².", 3],
+    [quizIds[8], "O que é um ângulo obtuso?",
+      "Os ângulos são classificados conforme sua medida.",
+      JSON.stringify(["Menor que 90°", "Igual a 90°", "Entre 90° e 180°", "Igual a 180°"]), 2,
+      "Agudo < 90°; Reto = 90°; Obtuso: entre 90° e 180°; Raso = 180°.", 4],
+    [quizIds[8], "Dois ângulos são suplementares quando a soma é:",
+      "Pares de ângulos têm relações especiais.",
+      JSON.stringify(["45°", "90°", "180°", "360°"]), 2,
+      "Suplementares somam 180°. Complementares somam 90°.", 5],
+    [quizIds[8], "Qual é o perímetro de um triângulo equilátero de lado 6 cm?",
+      "Equilátero: todos os lados iguais.",
+      JSON.stringify(["12 cm", "18 cm", "24 cm", "36 cm"]), 1,
+      "Perímetro = 3 × lado = 3 × 6 = 18 cm.", 6],
+    [quizIds[8], "Um trapézio tem bases 6 cm e 10 cm e altura 4 cm. Qual é sua área?",
+      "A fórmula da área do trapézio usa as duas bases e a altura.",
+      JSON.stringify(["16 cm²", "24 cm²", "32 cm²", "40 cm²"]), 2,
+      "Área = ((B + b) × h) / 2 = ((10 + 6) × 4) / 2 = 64 / 2 = 32 cm².", 7],
+    // Quiz 10: Programação Básica
+    [quizIds[9], "O que é uma variável em programação?",
+      "Variáveis são o conceito mais fundamental de qualquer linguagem.",
+      JSON.stringify(["Um tipo de loop", "Um espaço na memória para armazenar dados", "Um operador lógico", "Uma função matemática"]), 1,
+      "Variável: identificador que referencia um espaço de memória onde um valor é guardado.", 0],
+    [quizIds[9], "Qual tipo de dado armazena texto?",
+      "Cada tipo de dado é adequado para um tipo de informação.",
+      JSON.stringify(["int", "float", "bool", "string"]), 3,
+      "string (ou char[]) armazena sequências de caracteres como palavras e frases.", 1],
+    [quizIds[9], "O que faz a estrutura while?",
+      "Estruturas de repetição são fundamentais para automatizar tarefas.",
+      JSON.stringify(["Declara variáveis", "Define funções", "Repete um bloco enquanto a condição for verdadeira", "Importa módulos"]), 2,
+      "while: repete o bloco de código enquanto a condição avaliada for verdadeira.", 2],
+    [quizIds[9], "Para que servem os comentários no código?",
+      "Boas práticas de programação incluem documentar o código.",
+      JSON.stringify(["São instruções executadas primeiro", "São ignorados pelo compilador e servem para documentar", "Definem o tipo de variável", "Criam atalhos de teclado"]), 1,
+      "Comentários não são executados — ajudam outros desenvolvedores (e você mesmo) a entender o código.", 3],
+    [quizIds[9], "Qual é o resultado de 10 % 3 na maioria das linguagens?",
+      "O operador módulo (%) retorna o resto da divisão inteira.",
+      JSON.stringify(["3", "1", "0", "3,33"]), 1,
+      "10 ÷ 3 = 3 com resto 1. O operador % retorna esse resto.", 4],
+    [quizIds[9], "Qual a diferença entre = e == na maioria das linguagens?",
+      "Confundir esses operadores é um erro muito comum para iniciantes.",
+      JSON.stringify(["Nenhuma diferença", "= atribui valor; == compara igualdade", "== atribui; = compara", "Ambos fazem atribuição"]), 1,
+      "= (atribuição): define o valor de uma variável. == (comparação): verifica se dois valores são iguais.", 5],
+    [quizIds[9], "O que é uma função (ou procedimento)?",
+      "Funções permitem organizar e reutilizar código.",
+      JSON.stringify(["Um tipo de variável numérica", "Um bloco de código nomeado e reutilizável", "Um tipo de dado", "Um operador condicional"]), 1,
+      "Função: bloco de instruções com nome próprio que pode ser chamado várias vezes no programa.", 6],
+    [quizIds[9], "O que é um algoritmo?",
+      "Algoritmos são a base do pensamento computacional.",
+      JSON.stringify(["Uma linguagem de programação específica", "Um componente de hardware", "Uma sequência finita de passos para resolver um problema", "Um banco de dados"]), 2,
+      "Algoritmo: sequência ordenada, finita e não ambígua de instruções que resolve um problema.", 7],
   ];
 
   for (const q of questions) insertQuestion.run(...q);
@@ -255,6 +423,8 @@ function seed() {
 
   const fbStats = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   feedbackPool.forEach(([r]) => fbStats[r]++);
+
+  console.log("\nBanco populado com sucesso!\n");
 
 }
 

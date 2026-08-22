@@ -1,7 +1,11 @@
+import { RouterProvider } from 'react-router';
+import { router } from './routes';
+import { AuthProvider } from './contexts/AuthContext';
 
-  import { createRoot } from "react-dom/client";
-  import App from "./app/App.tsx";
-  import "./styles/index.css";
-
-  createRoot(document.getElementById("root")!).render(<App />);
-  
+export default function App() {
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  );
+}

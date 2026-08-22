@@ -2,35 +2,16 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { Star, Send, CheckCircle, RefreshCw } from 'lucide-react';
+import { Star, Send, CheckCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../lib/api';
 
-const STORAGE_KEY = 'quiztech_feedbacks';
-
-interface FeedbackData {
-  userId: string;
+interface ApiFeedback {
+  id: number;
+  user_id: number;
   rating: number;
-  comment: string;
-  updatedAt: string;
-}
-
-function loadFeedback(userId: string): FeedbackData | null {
-  try {
-    const all: FeedbackData[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    return all.find((f) => f.userId === userId) || null;
-  } catch {
-    return null;
-  }
-}
-
-function saveFeedback(data: FeedbackData) {
-  try {
-    const all: FeedbackData[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    const idx = all.findIndex((f) => f.userId === data.userId);
-    if (idx !== -1) all[idx] = data;
-    else all.push(data);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  } catch {}
+  comment: string | null;
+  updated_at: string;
 }
 
 const STAR_LABELS = ['', 'Ruim', 'Regular', 'Bom', 'Muito Bom', 'Excelente'];
@@ -41,40 +22,59 @@ export function Feedback() {
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [comment, setComment] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [existing, setExisting] = useState<FeedbackData | null>(null);
+  const [existing, setExisting] = useState<ApiFeedback | null>(null);
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [loadingFeedback, setLoadingFeedback] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      const prev = loadFeedback(user.id);
-      if (prev) {
-        setExisting(prev);
-        setRating(prev.rating);
-        setComment(prev.comment);
-      }
-    }
+    if (!user) return;
+    api.get<{ feedback: ApiFeedback | null }>('/api/feedbacks/mine')
+      .then(({ feedback }) => {
+        if (feedback) {
+          setExisting(feedback);
+          setRating(feedback.rating);
+          setComment(feedback.comment ?? '');
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingFeedback(false));
   }, [user]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rating || !user) return;
-
-    const data: FeedbackData = {
-      userId: user.id,
-      rating,
-      comment,
-      updatedAt: new Date().toISOString(),
-    };
-    saveFeedback(data);
-    setExisting(data);
-    setSubmitted(true);
-    setEditing(false);
-    setTimeout(() => setSubmitted(false), 3000);
+    setSaving(true);
+    try {
+      const res = await api.post<{ feedback: ApiFeedback }>('/api/feedbacks', {
+        rating,
+        comment: comment.trim() || undefined,
+      });
+      setExisting(res.feedback);
+      setSubmitted(true);
+      setEditing(false);
+      setTimeout(() => setSubmitted(false), 3000);
+    } catch {
+      // silently fail — user sees the form still
+    } finally {
+      setSaving(false);
+    }
   };
 
   const activeRating = hovered || rating;
   const isUpdate = !!existing && !editing;
+
+  if (loadingFeedback) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <Sidebar userRole="student" />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </main>
+      </div>
+    );
+  }
 
   if (isUpdate) {
     return (
@@ -94,17 +94,15 @@ export function Feedback() {
                 </div>
                 <h2 className="text-2xl mb-1">Obrigado pelo seu feedback!</h2>
                 <p className="text-muted-foreground text-sm">
-                  Avaliado em {new Date(existing!.updatedAt).toLocaleDateString('pt-BR', {
-                    day: '2-digit', month: 'long', year: 'numeric'
+                  Avaliado em {new Date(existing!.updated_at).toLocaleDateString('pt-BR', {
+                    day: '2-digit', month: 'long', year: 'numeric',
                   })}
                 </p>
               </div>
 
               <div className="flex justify-center gap-1 mb-3">
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    size={36}
+                  <Star key={s} size={36}
                     className={s <= existing!.rating ? 'text-warning fill-warning' : 'text-muted-foreground/30'}
                   />
                 ))}
@@ -120,11 +118,7 @@ export function Feedback() {
                 </div>
               )}
 
-              <Button
-                variant="outline"
-                onClick={() => setEditing(true)}
-                className="flex items-center gap-2 mx-auto"
-              >
+              <Button variant="outline" onClick={() => setEditing(true)} className="flex items-center gap-2 mx-auto">
                 <RefreshCw size={16} />
                 Atualizar avaliação
               </Button>
@@ -151,65 +145,38 @@ export function Feedback() {
           {submitted && (
             <div className="mb-6 p-4 bg-success/10 border border-success/30 rounded-lg flex items-center gap-3 text-success">
               <CheckCircle size={20} />
-              <span>
-                {existing ? 'Avaliação atualizada com sucesso!' : 'Avaliação enviada! Obrigado pelo feedback.'}
-              </span>
+              <span>{existing ? 'Avaliação atualizada com sucesso!' : 'Avaliação enviada! Obrigado pelo feedback.'}</span>
             </div>
           )}
 
           <Card>
             <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Star rating */}
               <div className="text-center">
                 <p className="text-lg mb-6">Como você avalia o QuizTech?</p>
-
-                <div
-                  className="flex justify-center gap-2 mb-3"
-                  onMouseLeave={() => setHovered(0)}
-                >
+                <div className="flex justify-center gap-2 mb-3" onMouseLeave={() => setHovered(0)}>
                   {[1, 2, 3, 4, 5].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setRating(s)}
-                      onMouseEnter={() => setHovered(s)}
+                    <button key={s} type="button" onClick={() => setRating(s)} onMouseEnter={() => setHovered(s)}
                       className="transition-transform hover:scale-110 active:scale-95 focus:outline-none"
                       aria-label={`${s} estrela${s > 1 ? 's' : ''}`}
                     >
-                      <Star
-                        size={48}
-                        className={`transition-colors ${
-                          s <= activeRating
-                            ? 'text-warning fill-warning drop-shadow-sm'
-                            : 'text-muted-foreground/30 hover:text-muted-foreground/60'
-                        }`}
-                      />
+                      <Star size={48} className={`transition-colors ${
+                        s <= activeRating ? 'text-warning fill-warning drop-shadow-sm' : 'text-muted-foreground/30 hover:text-muted-foreground/60'
+                      }`} />
                     </button>
                   ))}
                 </div>
-
                 <p className={`text-base h-6 transition-all ${activeRating ? STAR_COLORS[activeRating] : 'text-transparent'}`}>
                   {activeRating ? STAR_LABELS[activeRating] : '.'}
                 </p>
               </div>
 
-              {/* Aspect quick-select */}
               {rating > 0 && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    O que você mais gosta? (opcional)
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-3">O que você mais gosta? (opcional)</p>
                   <div className="flex flex-wrap gap-2">
                     {['Design', 'Quizzes', 'Gamificação', 'Conteúdo', 'Facilidade de uso', 'Missões', 'Ranking'].map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => {
-                          const mention = `${tag} `;
-                          if (!comment.includes(mention)) {
-                            setComment((c) => (c ? `${c}${mention}` : mention));
-                          }
-                        }}
+                      <button key={tag} type="button"
+                        onClick={() => { const m = `${tag} `; if (!comment.includes(m)) setComment((c) => c ? `${c}${m}` : m); }}
                         className="px-3 py-1 rounded-full border border-border text-sm hover:border-primary hover:bg-primary/10 hover:text-primary transition-colors"
                       >
                         {tag}
@@ -219,38 +186,26 @@ export function Feedback() {
                 </div>
               )}
 
-              {/* Comment */}
               <div>
                 <label className="block text-sm mb-2">
                   Comentário <span className="text-muted-foreground">(opcional)</span>
                 </label>
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
+                <textarea value={comment} onChange={(e) => setComment(e.target.value)}
                   placeholder="Conte mais sobre sua experiência, sugestões de melhoria..."
-                  maxLength={1000}
-                  rows={4}
+                  maxLength={1000} rows={4}
                   className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none text-sm"
                 />
-                <p className="text-xs text-muted-foreground text-right mt-1">
-                  {comment.length}/1000
-                </p>
+                <p className="text-xs text-muted-foreground text-right mt-1">{comment.length}/1000</p>
               </div>
 
               <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  disabled={!rating}
-                  className="flex items-center gap-2"
-                >
-                  <Send size={16} />
+                <Button type="submit" disabled={!rating || saving} className="flex items-center gap-2">
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                   {editing ? 'Atualizar Avaliação' : 'Enviar Avaliação'}
                 </Button>
                 {editing && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => { setEditing(false); setRating(existing!.rating); setComment(existing!.comment); }}
+                  <Button type="button" variant="outline"
+                    onClick={() => { setEditing(false); setRating(existing!.rating); setComment(existing!.comment ?? ''); }}
                   >
                     Cancelar
                   </Button>
@@ -259,22 +214,12 @@ export function Feedback() {
             </form>
           </Card>
 
-          {/* Tips */}
           <Card className="mt-6 bg-primary/5 border-primary/20">
             <h3 className="text-base mb-3 text-primary">Por que sua avaliação importa?</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-0.5">✓</span>
-                Nos ajuda a priorizar melhorias nas áreas mais importantes para você
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-0.5">✓</span>
-                Feedbacks são lidos pelos professores e equipe de desenvolvimento
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-0.5">✓</span>
-                Você pode atualizar sua avaliação a qualquer momento
-              </li>
+              <li className="flex items-start gap-2"><span className="text-primary mt-0.5">✓</span> Nos ajuda a priorizar melhorias nas áreas mais importantes para você</li>
+              <li className="flex items-start gap-2"><span className="text-primary mt-0.5">✓</span> Feedbacks são lidos pelos professores e equipe de desenvolvimento</li>
+              <li className="flex items-start gap-2"><span className="text-primary mt-0.5">✓</span> Você pode atualizar sua avaliação a qualquer momento</li>
             </ul>
           </Card>
         </div>

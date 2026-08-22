@@ -7,7 +7,6 @@ Backend REST para a plataforma QuizTech — Node.js + Express + SQLite.
 ```bash
 cd server
 npm install
-npm run seed      # popula o banco com dados de exemplo
 npm run dev       # inicia em modo desenvolvimento (nodemon)
 # ou
 npm start         # produção
